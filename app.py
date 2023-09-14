@@ -31,8 +31,8 @@ def create_person():
     return jsonify({'message': 'Person created successfully'}), 201
 
 
-# handle dynamic parameter
-@app.route('/api/person/<string:name>', methods=['GET'])
+# read by name
+@app.route('/api/<string:name>', methods=['GET'])
 def get_person_by_name(name):
     person = Person.query.filter_by(name=name).first()
 
@@ -48,7 +48,7 @@ def get_person_by_name(name):
 
 # read person by id
 @app.route('/api/<int:user_id>', methods=['GET'])
-def get_person(user_id):
+def get_person_by_id(user_id):
     person = Person.query.get_or_404(user_id)
     return jsonify({
         'id': person.id,
@@ -57,22 +57,41 @@ def get_person(user_id):
 
 
 # update details of an existing person by user_id
-@app.route('/api/<int:user_id>', methods=['PUT'])
-def update_person(user_id):
-    person = Person.query.get_or_404(user_id)
+@app.route('/api/<param>', methods=['PUT'])
+def update_person(param):
     data = request.get_json()
-    person.name = data['name']
-    db.session.commit()
-    return jsonify({'message': 'Person updated successfully'})
+
+    if param.isdigit():
+        person = Person.query.get_or_404(int(param))
+    else:
+        person = Person.query.filter_by(name=param).first()
+
+    if person:
+        # Update person's name if provided in the request JSON
+        if 'name' in data:
+            person.name = data['name']
+        
+        db.session.commit()
+
+        return jsonify({'message': 'Person updated successfully'})
+    else:
+        return jsonify({'message': 'Person not found'}), 404
 
 
 # delete a person by user_id
-@app.route('/api/<int:user_id>', methods=['DELETE'])
-def delete_person(user_id):
-    person = Person.query.get_or_404(user_id)
-    db.session.delete(person)
-    db.session.commit()
-    return jsonify({'message': 'Person deleted successfully'})
+@app.route('/api/<param>', methods=['DELETE'])
+def delete_person(param):
+    if param.isdigit():
+        person = Person.query.get_or_404(int(param))
+    else:
+        person = Person.query.get_or_404(name=param).first()
+
+    if person:
+        db.session.delete(person)
+        db.session.commit()
+        return jsonify({'message': 'Person deleted successfully'})
+    else:
+        return jsonify({'message': 'Person does not exist'})
 
 
 if __name__ == '__main__':

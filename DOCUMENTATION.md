@@ -80,8 +80,8 @@ API ENDPOINTS
 *Create a New Person: `POST /api`
 *Get Person by ID: `GET /api/<int:user_id>`
 *Get Person dynamically by NAME: `GET /api/person/<string:name>`
-*Update Person by ID: `PUT /api/<int:user_id>`
-*Delete Person by ID: `DELETE /api/<int:user_id>`
+*Update Person by ID: `PUT /api/<param>`
+*Delete Person by ID: `DELETE /api/<param>`
 
 
 **********************************************
