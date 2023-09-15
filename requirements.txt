@@ -4,3 +4,4 @@ Flask-RESTful==0.3.9
 mysql-connector-python==8.0.27
 marshmallow==3.16.0
 python-dotenv==0.19.1
+Gunicorn==20.1.0

@@ -1,50 +1,72 @@
-#!/usr/bin/env python
-
 import unittest
-import requests
+import json
+from app import app, db, Person
 
-# Base URL for your API
-base_url = 'http://localhost:5000'
-
-# Test data
-test_data = {
-    'name': 'John',
-}
-
-class TestAPI(unittest.TestCase):
+class FlaskApiTestCase(unittest.TestCase):
 
     def setUp(self):
-        # Optional: You can perform setup actions here before each test method runs.
-        pass
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://admin:adminPass@localhost/test_persons'
+        app.config['TESTING'] = True
+        self.app = app.test_client()
+
+
+        app.app_context().push()
+        db.create_all()
 
     def tearDown(self):
-        # Optional: You can perform cleanup actions here after each test method runs.
-        pass
+        db.drop_all()
+
+        app.app_context().pop()
 
     def test_create_person(self):
-        response = create_person(test_data['name'])
+        data = {'name': 'John Doe'}
+        response = self.app.post('/api', json=data)
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(json.loads(response.data)['message'], 'Person created successfully')
 
-    def test_get_person(self):
-        response = get_person(test_data['name'])
+    def test_get_person_by_name(self):
+        person = Person(name='John Doe')
+        db.session.add(person)
+        db.session.commit()
+
+        response = self.app.get(f'/api/{person.name}')
         self.assertEqual(response.status_code, 200)
-        # Add more assertions as needed to check the response data
+        self.assertEqual(json.loads(response.data)['name'], person.name)
+
+    def test_get_person_by_id(self):
+        person = Person(name='John Doe')
+        db.session.add(person)
+        db.session.commit()
+
+        response = self.app.get(f'/api/{person.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data)['id'], person.id)
 
     def test_update_person(self):
-        new_name = 'Updated Name'
-        response = update_person(test_data['name'], new_name)
+        person = Person(name='John Doe')
+        db.session.add(person)
+        db.session.commit()
+
+        data = {'name': 'Jane Doe'}
+        response = self.app.put(f'/api/{person.id}', json=data)
         self.assertEqual(response.status_code, 200)
-        # Add more assertions as needed to check the response data
+        self.assertEqual(json.loads(response.data)['message'], 'Person updated successfully')
+
+        updated_person = Person.query.get(person.id)
+        self.assertEqual(updated_person.name, 'Jane Doe')
 
     def test_delete_person(self):
-        response = delete_person(test_data['name'])
+        person = Person(name='John Doe')
+        db.session.add(person)
+        db.session.commit()
+
+        response = self.app.delete(f'/api/{person.id}')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data)['message'], 'Person deleted successfully')
+
+        deleted_person = Person.query.get(person.id)
+        self.assertIsNone(deleted_person)
 
 if __name__ == '__main__':
-    # Define the functions for CRUD operations (create_person, get_person, etc.) here
+    unittest.main()
 
-    # Create a test suite
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestAPI)
-
-    # Run the tests
-    unittest.TextTestRunner(verbosity=2).run(suite)

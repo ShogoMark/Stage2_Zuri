@@ -84,7 +84,7 @@ def delete_person(param):
     if param.isdigit():
         person = Person.query.get_or_404(int(param))
     else:
-        person = Person.query.get_or_404(name=param).first()
+        person = Person.query.filter_by(name=param).first()
 
     if person:
         db.session.delete(person)
